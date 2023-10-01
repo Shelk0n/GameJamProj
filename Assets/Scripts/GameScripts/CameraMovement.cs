@@ -9,7 +9,8 @@ public class CameraMovement : MonoBehaviour
        
     private Vector3 dragOrigin;
 
-    [SerializeField] private float zoomStep = 0.1f, minCamSize, MaxCamSize;
+    [SerializeField] private float minCamSize, maxCamSize;
+    [SerializeField] public bool isMoving;
 
     void Update()
     {
@@ -24,12 +25,11 @@ public class CameraMovement : MonoBehaviour
     }
     private void PanCamera()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
             dragOrigin = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        else if (Input.GetMouseButton(0))
+        else if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
         {
             Vector3 difference = dragOrigin - Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
             gameObject.transform.position += difference;
         }
 
@@ -38,13 +38,11 @@ public class CameraMovement : MonoBehaviour
     {
         if(Input.GetAxis("Mouse ScrollWheel") > 0)
         {
-            Debug.Log(Camera.main.orthographicSize);
-            Camera.main.orthographicSize = Camera.main.orthographicSize - zoomStep;
-
+            Camera.main.orthographicSize -= 0.2f;
         }
         if (Input.GetAxis("Mouse ScrollWheel") < 0)
         {
-            Camera.main.orthographicSize = 6;
+            Camera.main.orthographicSize += 0.2f;
         }
     }
 }

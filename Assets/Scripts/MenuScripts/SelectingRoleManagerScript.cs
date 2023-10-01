@@ -15,6 +15,8 @@ public class SelectingRoleManagerScript : MonoBehaviour
     [SerializeField] GameObject HCheck;
     [SerializeField] GameObject SCheck;
 
+    [SerializeField] GameObject Controller;
+
     private PhotonView view;
     void Start()
     {
@@ -58,6 +60,11 @@ public class SelectingRoleManagerScript : MonoBehaviour
     [PunRPC]
     private void HideSelectMenu()
     {
+        if (HackerNickname.text == PlayerPrefs.GetString("username"))
+            Controller.GetComponent<ButtonsControlNC>().side = "Hacker";
+        else
+            Controller.GetComponent<ButtonsControlNC>().side = "Admin";
+        Camera.main.transform.position = new Vector3(0,0,-10);
         SelectingMenu.SetActive(false);
     }
     [PunRPC]

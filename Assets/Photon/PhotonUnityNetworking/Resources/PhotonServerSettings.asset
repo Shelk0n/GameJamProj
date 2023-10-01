@@ -49,6 +49,9 @@ MonoBehaviour:
   - SendSysadmin
   - Check
   - HideSelectMenu
+  - AddAnotherPlayerMovement
+  - AdminReady
+  - HackerReady
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0
