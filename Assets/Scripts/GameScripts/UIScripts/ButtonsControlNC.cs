@@ -220,7 +220,6 @@ public class ButtonsControlNC : MonoBehaviour
                     SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(SaveAction.SendingUnits[i], "Neutral");
                 }
             }
-        }
         SaveAction.DeffendersNC.Clear();
         SaveAction.UpdatedToDef.Clear();
         SaveAction.AttackersNC.Clear();
