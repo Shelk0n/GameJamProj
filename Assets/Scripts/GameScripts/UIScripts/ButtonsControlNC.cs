@@ -15,8 +15,13 @@ public class ButtonsControlNC : MonoBehaviour
     [SerializeField] GameObject moveMenu;
     [SerializeField] InputField inputUnitsSend;
     [SerializeField] Text moneyText;
+    [SerializeField] Text movementPoints;
 
     public string side;
+    public string unSide;
+
+    private List<GameObject> myNertworkComponents = new List<GameObject>();
+    private List<int> removes = new List<int>();
 
     [SerializeField] GameObject readyHackerDetector;
     [SerializeField] GameObject readyAdminDetector;
@@ -26,6 +31,8 @@ public class ButtonsControlNC : MonoBehaviour
     private List<GameObject> connections;
     private List<GameObject> connectors;
     private GameObject currentNC;
+
+    [SerializeField] string stepTurn = "Hacker";
 
     private bool isSummon = false;
     private bool isMove = false;
@@ -91,7 +98,7 @@ public class ButtonsControlNC : MonoBehaviour
     {
         if (int.TryParse(inputUnitsSend.text, out var number))
         {
-            if (isMove && Convert.ToInt32(inputUnitsSend.text) <= currtntUnits)
+            if (isMove && Convert.ToInt32(inputUnitsSend.text) <= currtntUnits && SaveAction.movementPoint >= 1)
             {
                 SaveAction.SendingUnits.Add(Convert.ToInt32(inputUnitsSend.text));
                 SaveAction.AttackersNC.Add(currentNC);
@@ -100,7 +107,7 @@ public class ButtonsControlNC : MonoBehaviour
                 connectors[connections.IndexOf(attackedObject)].GetComponent<SpriteRenderer>().color = Color.blue;
                 currentNC.GetComponent<NetworkComponentController>().ChangeUnits(-Convert.ToInt32(inputUnitsSend.text), side);
             } 
-            else if(isSummon)
+            else if(isSummon && SaveAction.movementPoint >= 0.8f)
             {
                 Summon(Convert.ToInt32(inputUnitsSend.text));
             }
@@ -157,6 +164,8 @@ public class ButtonsControlNC : MonoBehaviour
         {
             waitingForAnotherPlayer.SetActive(false);
             OnNextMove();
+            readyAdminDetector.SetActive(false);
+            readyHackerDetector.SetActive(false);
         }
     }
     [PunRPC]
@@ -167,20 +176,48 @@ public class ButtonsControlNC : MonoBehaviour
         {
             waitingForAnotherPlayer.SetActive(false);
             OnNextMove();
+            readyAdminDetector.SetActive(false);
+            readyHackerDetector.SetActive(false);
+        }
+    }
+    private void UpdatingOwnershipList()
+    {
+        myNertworkComponents.Clear();
+        foreach (var NetwokComponent in GameObject.FindGameObjectsWithTag("NetworkComponent"))
+        {
+            if (NetwokComponent.GetComponent<NetworkComponentController>().Ownership == side)
+            {
+                myNertworkComponents.Add(NetwokComponent);
+            }
         }
     }
     public void OnNextMove()
     {
-        List<GameObject> myComponents = new List<GameObject>();
         for(int i = 0; i < SaveAction.DeffendersNC.Count; i++)
         {
             SaveAction.IdAttackersNC.Add(SaveAction.AttackersNC[i].GetComponent<NetworkComponentController>().ID);
             SaveAction.IdDeffendersNC.Add(SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ID);
         }
-        object[] IdAttackers = SaveAction.IdAttackersNC.Cast<object>().ToArray();
-        object[] IdDeffenders = SaveAction.IdAttackersNC.Cast<object>().ToArray();
-        object[] SendingUnit = SaveAction.IdAttackersNC.Cast<object>().ToArray();
-        view.RPC("AddAnotherPlayerMovement", RpcTarget.Others, IdAttackers, IdDeffenders, SendingUnit);
+
+        object[] IdAttackers = null;
+        object[] IdDeffenders = null;
+        object[] SendingUnit = null;
+        IdAttackers = SaveAction.IdAttackersNC.Cast<object>().ToArray();
+        IdDeffenders = SaveAction.IdDeffendersNC.Cast<object>().ToArray();
+        SendingUnit = SaveAction.SendingUnits.Cast<object>().ToArray();
+
+        UpdatingOwnershipList();
+        List<int> myNCid = new List<int>();
+        List<int> myNCUnits = new List<int>();
+        foreach(var NetworkComponent in myNertworkComponents)
+        {
+            myNCid.Add(NetworkComponent.GetComponent<NetworkComponentController>().ID);
+            myNCUnits.Add(NetworkComponent.GetComponent<NetworkComponentController>().units);
+        }
+        object[] myNCidObj = myNCid.Cast<object>().ToArray();
+        object[] myNCUnitsObj = myNCUnits.Cast<object>().ToArray();
+        isDataSent = false;
+        view.RPC("AddAnotherPlayerMovement", RpcTarget.Others, IdAttackers, IdDeffenders, SendingUnit, myNCidObj, myNCUnitsObj);
         StartCoroutine(WaitingData());
     }
     IEnumerator WaitingData()
@@ -190,51 +227,142 @@ public class ButtonsControlNC : MonoBehaviour
     }
     public void ShowChanges()
     {
-        for (int i = 0; i < SaveAction.AttackersNC.Count; i++)
+        if (side == "Hacker")
+            unSide = "Admin";
+        else
+            unSide = "Hacker";
+        removes = new List<int>();
+        if(side == stepTurn)
         {
-            string sideDef = "";
-            if (SaveAction.ConnectorsNC.Count < i)
+            for (int i = 0; i < SaveAction.AttackersNC.Count; i++)
             {
-                if (side == "Hacker")
-                    sideDef = "Admin";
-                else
-                    sideDef = "Hacker";
+                ShowChangesFunc(i);
+            }
+            stepTurn = unSide;
+        }
+        else
+        {
+            for (int i = SaveAction.AttackersNC.Count-1; i >= 0; i--)
+            {
+                ShowChangesFunc(i);
+            }
+            stepTurn = side;
+        }
+        UpdatingOwnershipList();
+
+        SaveAction.movementPoint = myNertworkComponents.Count * 0.1f + (SaveAction.movementPoint * 3) / myNertworkComponents.Count;
+        movementPoints.text = SaveAction.movementPoint.ToString();
+
+        if(currentNC != null)
+            CancelPick();
+        SaveAction.DeffendersNC = new List<GameObject>();
+        SaveAction.UpdatedToDef = new List<GameObject>();
+        SaveAction.AttackersNC = new List<GameObject>();
+        SaveAction.UpdatedToScout = new List<GameObject>();
+        SaveAction.SendingUnits = new List<int>();
+        SaveAction.ConnectorsNC = new List<GameObject>();
+        SaveAction.IdAttackersNC = new List<int>();
+        SaveAction.IdDeffendersNC = new List<int>();
+        connections = null;
+        connectors = null;
+        currentNC = null;
+    }
+    public void ShowChangesFunc(int i)
+    {
+        if(!removes.Contains(i))
+        {
+            if (side != SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership && SaveAction.AttackersNC[i].GetComponent<NetworkComponentController>().Ownership == side &&
+                    unSide != SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership)
+            {
+                SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(-SaveAction.SendingUnits[i], "Neutral");
+                if (SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units < 0)
+                {
+                    for (int j = 0; j < SaveAction.DeffendersNC.Count; j++)
+                    {
+                        if (SaveAction.AttackersNC[j].GetComponent<NetworkComponentController>().ID ==
+                            SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ID)
+                        {
+                            removes.Add(j);
+                        }
+                    }
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeSide(side);
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units *= -1;
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(0, "Neutral");
+                }
+            }
+            else if (side != SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership && SaveAction.AttackersNC[i].GetComponent<NetworkComponentController>().Ownership != side)
+            {
+                SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(-SaveAction.SendingUnits[i], unSide);
+                if (SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units < 0)
+                {
+                    for (int j = 0; j < SaveAction.DeffendersNC.Count; j++)
+                    {
+                        if (SaveAction.AttackersNC[j].GetComponent<NetworkComponentController>().ID ==
+                            SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ID)
+                        {
+                            removes.Add(j);
+                        }
+                    }
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeSide(unSide);
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units *= -1;
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(0, unSide);
+                }
+            }
+            else if ((SaveAction.AttackersNC[i].GetComponent<NetworkComponentController>().Ownership == side && SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership == unSide) ||
+                (SaveAction.AttackersNC[i].GetComponent<NetworkComponentController>().Ownership == unSide && SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership == side))
+            {
+                SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(-SaveAction.SendingUnits[i], "Neutral");
+                if (SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units < 0)
+                {
+                    for (int j = 0; j < SaveAction.AttackersNC.Count; j++)
+                    {
+                        if (SaveAction.AttackersNC[j].GetComponent<NetworkComponentController>().ID ==
+                            SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ID)
+                        {
+                            removes.Add(j);
+                        }
+                    }
+                    for(int j = 0;j < SaveAction.DeffendersNC.Count; j++)
+                    {
+                        Debug.Log(i);
+                        Debug.Log(SaveAction.DeffendersNC[i]);
+                    }
+                    if(SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership == "Hacker")
+                        SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeSide("Admin");
+                    else
+                        SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeSide("Hacker");
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units *= -1;
+                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(0, "Neutral");
+                }
             }
             else
-                sideDef = side;
-                
-            if(SaveAction.ConnectorsNC.Count < i)
             {
-                if (sideDef != SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().Ownership)
-                {
-                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(-SaveAction.SendingUnits[i], "Neutral");
-                    if (SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units < 0)
-                    {
-                        SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeSide(sideDef);
-                        SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().units *= -1;
-                        SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(0, "Neutral");
-                    }
-                }
-                else
-                {
-                    SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(SaveAction.SendingUnits[i], "Neutral");
-                }
+                SaveAction.DeffendersNC[i].GetComponent<NetworkComponentController>().ChangeUnits(SaveAction.SendingUnits[i], "Neutral");
             }
-        SaveAction.DeffendersNC.Clear();
-        SaveAction.UpdatedToDef.Clear();
-        SaveAction.AttackersNC.Clear();
-        SaveAction.UpdatedToScout.Clear();
-        SaveAction.SendingUnits.Clear();
-        SaveAction.ConnectorsNC.Clear();
-        CancelPick();
+        }
     }
     [PunRPC]
-    private void AddAnotherPlayerMovement(object[] AttackersA, object[] DeffendersA, object[] SendingUnitsA)
+    private void AddAnotherPlayerMovement(object[] AttackersA, object[] DeffendersA, object[] SendingUnitsA, object[] UpdatingUnitsId, object[] UpdatingUnits)
     {
         List<int> AttackersAP = AttackersA.Cast<int>().ToList();
         List<int> DeffendersAP = DeffendersA.Cast<int>().ToList();
         List<int> SendingUnitsAP = SendingUnitsA.Cast<int>().ToList();
-        Debug.Log(123);
+
+        List<int> UpdateUnitsId = UpdatingUnitsId.Cast<int>().ToList();
+        List<int> UpdateUnits = UpdatingUnits.Cast<int>().ToList();
+
+        for (int i = 0; i < UpdateUnitsId.Count; i++)
+        {
+            foreach (var NetwokComponent in GameObject.FindGameObjectsWithTag("NetworkComponent"))
+            {
+                if (NetwokComponent.GetComponent<NetworkComponentController>().ID == UpdateUnitsId[i])
+                {
+                    NetwokComponent.GetComponent<NetworkComponentController>().units = UpdateUnits[i];
+                    NetwokComponent.GetComponent<NetworkComponentController>().ChangeUnits(0, "Neutral");
+                }
+            }
+        }
+
         for (int i = 0; i < AttackersAP.Count; i++)
         {
             SaveAction.IdAttackersNC.Add(AttackersAP[i]);
@@ -251,7 +379,7 @@ public class ButtonsControlNC : MonoBehaviour
                     SaveAction.AttackersNC.Add(NetwokComponent);
                     foreach (var NetwokComponent1 in GameObject.FindGameObjectsWithTag("NetworkComponent"))
                     {
-                        if (NetwokComponent.GetComponent<NetworkComponentController>().ID == DeffendersAP[i])
+                        if (NetwokComponent1.GetComponent<NetworkComponentController>().ID == DeffendersAP[i])
                         {
                             SaveAction.DeffendersNC.Add(NetwokComponent1);
                             SaveAction.SendingUnits.Add(SendingUnitsAP[i]);
@@ -262,6 +390,11 @@ public class ButtonsControlNC : MonoBehaviour
                 }
             }
         }
+        AttackersAP = null;
+        DeffendersAP = null;
+        SendingUnitsAP = null;
+        UpdateUnits = null;
+        UpdateUnitsId = null;
         isDataSent = true;
     }
 
@@ -280,6 +413,7 @@ public class ButtonsControlNC : MonoBehaviour
         int id = 0;
         foreach(var NetwokComponent in GameObject.FindGameObjectsWithTag("NetworkComponent"))
         {
+            NetwokComponent.GetComponent<NetworkComponentController>().ChangeUnits(20, "Neutral");
             NetwokComponent.GetComponent<NetworkComponentController>().ID = id;
             id++;
         }

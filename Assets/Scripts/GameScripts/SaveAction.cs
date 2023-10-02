@@ -16,5 +16,5 @@ public static class SaveAction
     public static List<GameObject> UpdatedToScout = new List<GameObject>();
 
     public static int money = 100;
-    public static int movementPoint;
+    public static float movementPoint = 3f;
 }

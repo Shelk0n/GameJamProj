@@ -13,6 +13,10 @@ public class NetworkComponentController : MonoBehaviour
     public int summonableUnits = 100;
     public int moneyPerMove = 10;
 
+    public Sprite hackerSprite;
+    public Sprite adminSprite;
+    public Sprite neutralSprite;
+
     public int ID;
     public string Ownership = "Neutral";
 
@@ -89,14 +93,17 @@ public class NetworkComponentController : MonoBehaviour
     {
         if(Ownership == "Hacker")
         {
-            gameObject.GetComponent<SpriteRenderer>().color = Color.green;
+            gameObject.GetComponent<SpriteRenderer>().sprite = hackerSprite;
+            gameObject.GetComponent<SpriteRenderer>().color = Color.white;
         }
         else if(Ownership == "Admin")
         {
-            gameObject.GetComponent<SpriteRenderer>().color = Color.cyan;
+            gameObject.GetComponent<SpriteRenderer>().sprite = adminSprite;
+            gameObject.GetComponent<SpriteRenderer>().color = Color.white;
         }
         else if (Ownership == "Neutral")
         {
+            gameObject.GetComponent<SpriteRenderer>().sprite = neutralSprite;
             gameObject.GetComponent<SpriteRenderer>().color = Color.white;
         }
     }

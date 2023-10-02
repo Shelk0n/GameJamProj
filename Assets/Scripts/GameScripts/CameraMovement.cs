@@ -14,11 +14,11 @@ public class CameraMovement : MonoBehaviour
 
     void Update()
     {
-        if (Screen.width - Input.mousePosition.x < 10 || Screen.width - Input.mousePosition.x > Screen.width - 10 ||
+        /*if (Screen.width - Input.mousePosition.x < 10 || Screen.width - Input.mousePosition.x > Screen.width - 10 ||
             Screen.height - Input.mousePosition.y < 10 || Screen.height - Input.mousePosition.y > Screen.height - 10)
         {
             gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), speed * Time.deltaTime);
-        }
+        }*/
         PanCamera();
         Zoom();
             
