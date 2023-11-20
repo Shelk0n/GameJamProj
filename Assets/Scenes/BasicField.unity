@@ -3933,7 +3933,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1796329122
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4688,6 +4688,10 @@ PrefabInstance:
     - target: {fileID: 1885899502066543706, guid: 31c95e810a09f664582890a1810814e4, type: 3}
       propertyPath: m_Name
       value: NetworkComponent (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2138905728788735344, guid: 31c95e810a09f664582890a1810814e4, type: 3}
+      propertyPath: Ownership
+      value: Admin
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

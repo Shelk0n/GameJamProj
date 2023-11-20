@@ -411,10 +411,26 @@ public class ButtonsControlNC : MonoBehaviour
         moneyText.text = SaveAction.money.ToString();
         view = GetComponent<PhotonView>();
         int id = 0;
+        List<GameObject> ncs = new List<GameObject>();
+        List<float> distance = new List<float>();
         foreach(var NetwokComponent in GameObject.FindGameObjectsWithTag("NetworkComponent"))
         {
-            NetwokComponent.GetComponent<NetworkComponentController>().ChangeUnits(20, "Neutral");
-            NetwokComponent.GetComponent<NetworkComponentController>().ID = id;
+            ncs.Add(NetwokComponent);
+            distance.Add(NetwokComponent.transform.position.magnitude);
+        }
+        List<GameObject> ncs1 = new List<GameObject>();
+        List<float> distance1 = new List<float>();
+        while(distance.Count > 0)
+        {
+            int index = distance.IndexOf(distance.Min());
+            ncs1.Add(ncs[index]);
+            distance1.Add(distance[index]);
+            ncs.RemoveAt(index);
+            distance.RemoveAt(index);
+        }
+        foreach(var NetworkComponent in ncs1 )
+        {
+            NetworkComponent.GetComponent<NetworkComponentController>().ID = id;
             id++;
         }
     }
