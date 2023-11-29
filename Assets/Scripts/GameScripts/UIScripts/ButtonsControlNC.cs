@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Windows;
-using Photon.Pun;
 using System.Linq;
 
 public class ButtonsControlNC : MonoBehaviour
@@ -39,8 +38,6 @@ public class ButtonsControlNC : MonoBehaviour
     private bool isDataSent = false;
 
     private GameObject attackedObject;
-
-    private PhotonView view;
     public static void InitializeNC(NetworkComponentController ncController)
     {
         nc = ncController;
@@ -150,13 +147,12 @@ public class ButtonsControlNC : MonoBehaviour
     }
     public void OnReadyToNextMoveButton()
     {
-        waitingForAnotherPlayer.SetActive(true);
+        /*waitingForAnotherPlayer.SetActive(true);
         if (side == "Hacker")
             view.RPC("HackerReady", RpcTarget.All);
         else
-            view.RPC("AdminReady", RpcTarget.All);
+            view.RPC("AdminReady", RpcTarget.All);*/
     }
-    [PunRPC]
     private void HackerReady()
     {
         readyHackerDetector.SetActive(true);
@@ -168,7 +164,6 @@ public class ButtonsControlNC : MonoBehaviour
             readyHackerDetector.SetActive(false);
         }
     }
-    [PunRPC]
     private void AdminReady()
     {
         readyAdminDetector.SetActive(true);
@@ -217,7 +212,7 @@ public class ButtonsControlNC : MonoBehaviour
         object[] myNCidObj = myNCid.Cast<object>().ToArray();
         object[] myNCUnitsObj = myNCUnits.Cast<object>().ToArray();
         isDataSent = false;
-        view.RPC("AddAnotherPlayerMovement", RpcTarget.Others, IdAttackers, IdDeffenders, SendingUnit, myNCidObj, myNCUnitsObj);
+        //view.RPC("AddAnotherPlayerMovement", RpcTarget.Others, IdAttackers, IdDeffenders, SendingUnit, myNCidObj, myNCUnitsObj);
         StartCoroutine(WaitingData());
     }
     IEnumerator WaitingData()
@@ -341,7 +336,6 @@ public class ButtonsControlNC : MonoBehaviour
             }
         }
     }
-    [PunRPC]
     private void AddAnotherPlayerMovement(object[] AttackersA, object[] DeffendersA, object[] SendingUnitsA, object[] UpdatingUnitsId, object[] UpdatingUnits)
     {
         List<int> AttackersAP = AttackersA.Cast<int>().ToList();
@@ -409,7 +403,7 @@ public class ButtonsControlNC : MonoBehaviour
     private void Start()
     {
         moneyText.text = SaveAction.money.ToString();
-        view = GetComponent<PhotonView>();
+        //view = GetComponent<PhotonView>();
         int id = 0;
         List<GameObject> ncs = new List<GameObject>();
         List<float> distance = new List<float>();

@@ -1,19 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Photon.Realtime;
-using Photon.Pun;
 
 public class RoomListItem : MonoBehaviour
 {
     public Text textRoomName;
     public Text textPlayerCount;
-    public void SetInfo(RoomInfo info)
+    [SerializeField] private int roomId;
+    public void SetInfo(int roomid, string username, int userscount)
     {
-        textRoomName.text = info.Name;
-        textPlayerCount.text = info.PlayerCount + "/" + info.MaxPlayers;
+        textRoomName.text = username;
+        textPlayerCount.text = userscount + "/2";
+        roomId = roomid;
     }
-    public void JoinToRoom()
+    public void JoinRoom()
     {
-        PhotonNetwork.JoinRoom(textRoomName.text);
     }
 }

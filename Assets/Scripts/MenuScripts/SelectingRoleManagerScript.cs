@@ -1,4 +1,3 @@
-using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,31 +16,28 @@ public class SelectingRoleManagerScript : MonoBehaviour
 
     [SerializeField] GameObject Controller;
 
-    private PhotonView view;
     void Start()
     {
-        view = GetComponent<PhotonView>();
+        //view = GetComponent<PhotonView>();
     }
     public void OnHackerClick()
     {
-        if(HackerNickname.text == "" && SysadminNickname.text != PlayerPrefs.GetString("username"))
+        /*if(HackerNickname.text == "" && SysadminNickname.text != PlayerPrefs.GetString("username"))
             view.RPC("SendHacker", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
         else if (HackerNickname.text == PlayerPrefs.GetString("username"))
-            view.RPC("SendHacker", RpcTarget.AllBuffered, "");
+            view.RPC("SendHacker", RpcTarget.AllBuffered, "");*/
     }
     public void OnSysadminClick()
     {
-        if (SysadminNickname.text == "" && HackerNickname.text != PlayerPrefs.GetString("username"))
+        /*if (SysadminNickname.text == "" && HackerNickname.text != PlayerPrefs.GetString("username"))
             view.RPC("SendSysadmin", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
         else if (SysadminNickname.text == PlayerPrefs.GetString("username"))
-            view.RPC("SendSysadmin", RpcTarget.AllBuffered, "");
+            view.RPC("SendSysadmin", RpcTarget.AllBuffered, "");*/
     }
-    [PunRPC]
     private void SendHacker(string nickname)
     {
         HackerNickname.text = nickname;
     }
-    [PunRPC]
     private void SendSysadmin(string nickname)
     {
         SysadminNickname.text = nickname;
@@ -50,14 +46,13 @@ public class SelectingRoleManagerScript : MonoBehaviour
     {
         if (SysadminNickname.text != HackerNickname.text && SysadminNickname.text != "" && HackerNickname.text != "")
         {
-            view.RPC("Check", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
+            /*view.RPC("Check", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
             if(HCheck.activeSelf && SCheck.activeSelf)
             {
                 view.RPC("HideSelectMenu", RpcTarget.AllBuffered);
-            }
+            }*/
         }
     }
-    [PunRPC]
     private void HideSelectMenu()
     {
         if (HackerNickname.text == PlayerPrefs.GetString("username"))
@@ -67,7 +62,6 @@ public class SelectingRoleManagerScript : MonoBehaviour
         Camera.main.transform.position = new Vector3(0,0,-10);
         SelectingMenu.SetActive(false);
     }
-    [PunRPC]
     public void Check(string nickname)
     {
         if(HackerNickname.text == nickname)
