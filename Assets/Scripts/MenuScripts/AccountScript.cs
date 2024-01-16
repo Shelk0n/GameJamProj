@@ -44,14 +44,14 @@ public class AccountScript : MonoBehaviour
     }
     public void OnLogInClick()
     {
-        if(usernameField.text == string.Empty)
+        if (usernameField.text == string.Empty)
         {
-            usernameField.text = "Please enter your login";
+            usernameField.placeholder.GetComponent<Text>().text = "Please enter your login";
             return;
         }
         if (passField.text == string.Empty)
         {
-            passField.text = "Please enter your password";
+            passField.placeholder.GetComponent<Text>().text = "Please enter your login";
             return;
         }
 
@@ -111,17 +111,17 @@ public class AccountScript : MonoBehaviour
     {
         if (UsernameTextReg.text == string.Empty)
         {
-            UsernameTextReg.text = "Please enter your login";
+            UsernameTextReg.placeholder.GetComponent<Text>().text = "Please enter your login";
             return;
         }
         if (PasswordTextReg.text == string.Empty)
         {
-            PasswordTextReg.text = "Please enter your password";
+            PasswordTextReg.placeholder.GetComponent<Text>().text = "Please enter your password";
             return;
         }
         if (PasswordRepTextReg.text == string.Empty)
         {
-            PasswordRepTextReg.text = "Please enter your password";
+            PasswordRepTextReg.placeholder.GetComponent<Text>().text = "Please enter your password";
             return;
         }
         if(PasswordRepTextReg.text != PasswordTextReg.text)
@@ -153,6 +153,7 @@ public class AccountScript : MonoBehaviour
     public void OnLogoutClick()
     {
         PlayerPrefs.DeleteKey("username");
+        PlayerPrefs.DeleteKey("id");
         accountButtonText.text = "Log in";
         OnBackClick();
     }

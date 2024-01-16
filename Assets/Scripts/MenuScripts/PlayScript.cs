@@ -5,8 +5,13 @@ using UnityEngine.SceneManagement;
 
 public class PlayScript : MonoBehaviour
 {
+    [SerializeField] GameObject nonRegisterError;
     public void OnPlayClick()
     {
-        SceneManager.LoadScene("Menu");
+        if(PlayerPrefs.HasKey("username"))
+            SceneManager.LoadScene("Menu");
+        else
+            nonRegisterError.SetActive(true);
     }
+    public void OnOkClick() => nonRegisterError.SetActive(false);
 }

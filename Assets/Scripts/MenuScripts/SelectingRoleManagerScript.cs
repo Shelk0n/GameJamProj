@@ -1,10 +1,16 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SelectingRoleManagerScript : MonoBehaviour
 {
+    string URL = "https://daun.yatopiacraft.ru:44384";
+
     [SerializeField] Text HackerNickname;
     [SerializeField] Text SysadminNickname;
 
@@ -18,29 +24,84 @@ public class SelectingRoleManagerScript : MonoBehaviour
 
     void Start()
     {
-        //view = GetComponent<PhotonView>();
+        StartCoroutine(WaitingForAnotherPlayerSideDesision());
+    }
+    IEnumerator WaitingForAnotherPlayerSideDesision()
+    {
+        int otherSide = 0;
+        if (PlayerPrefs.GetInt("isMaster") == 1)
+            otherSide = 2;
+        else
+            otherSide = 1;
+        while (true)
+        {
+            UnityWebRequest www = UnityWebRequest.Get($"{URL}/getuserside/{PlayerPrefs.GetInt("roomid")}/{otherSide}");
+            yield return www.SendWebRequest();
+
+            UnityWebRequest www1 = UnityWebRequest.Get($"{URL}/getroominfo/{PlayerPrefs.GetInt("roomid")}");
+            yield return www1.SendWebRequest();
+            string strinfo = www1.downloadHandler.text;
+            strinfo = strinfo.Replace("\"", "");
+            string[] info = strinfo.Split('/');
+            if (www.downloadHandler.text == "true")
+            {
+                if (HackerNickname.text == info[3 + otherSide])
+                    HackerNickname.text = string.Empty;
+                SysadminNickname.text = string.Empty;
+                SysadminNickname.text = info[3 + otherSide];
+            }
+            else if (www.downloadHandler.text == "false")
+            {
+                if (SysadminNickname.text == info[3 + otherSide])
+                    SysadminNickname.text = string.Empty;
+                HackerNickname.text = string.Empty;
+                HackerNickname.text = info[3 + otherSide];
+            }
+            else if (www.downloadHandler.text == "null")
+            {
+                if(HackerNickname.text == info[3 + otherSide])
+                    HackerNickname.text = string.Empty;
+                else if (SysadminNickname.text == info[3 + otherSide])
+                    SysadminNickname.text = string.Empty;
+            }
+            yield return new WaitForSeconds(0.5f);
+        }
     }
     public void OnHackerClick()
     {
-        /*if(HackerNickname.text == "" && SysadminNickname.text != PlayerPrefs.GetString("username"))
-            view.RPC("SendHacker", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
+        if(HackerNickname.text == string.Empty && SysadminNickname.text != PlayerPrefs.GetString("username"))
+        {
+            StartCoroutine(SetSide(false));
+            HackerNickname.text = PlayerPrefs.GetString("username");
+        }
         else if (HackerNickname.text == PlayerPrefs.GetString("username"))
-            view.RPC("SendHacker", RpcTarget.AllBuffered, "");*/
+        {
+            StartCoroutine(SetSide(null));
+            HackerNickname.text = string.Empty;
+        }
+    }
+    IEnumerator SetSide(bool? side)
+    {
+        string data = "null";
+        if (side == true)
+            data = "true";
+        else if (side == false)
+            data = "false";
+        UnityWebRequest www = UnityWebRequest.Get($"{URL}/setuserside/{PlayerPrefs.GetInt("roomid")}/{PlayerPrefs.GetInt("isMaster")}/{data}");
+        yield return www.SendWebRequest();
     }
     public void OnSysadminClick()
     {
-        /*if (SysadminNickname.text == "" && HackerNickname.text != PlayerPrefs.GetString("username"))
-            view.RPC("SendSysadmin", RpcTarget.AllBuffered, PlayerPrefs.GetString("username"));
+        if (SysadminNickname.text == string.Empty && HackerNickname.text != PlayerPrefs.GetString("username"))
+        {
+            StartCoroutine(SetSide(true));
+            SysadminNickname.text = PlayerPrefs.GetString("username");
+        }
         else if (SysadminNickname.text == PlayerPrefs.GetString("username"))
-            view.RPC("SendSysadmin", RpcTarget.AllBuffered, "");*/
-    }
-    private void SendHacker(string nickname)
-    {
-        HackerNickname.text = nickname;
-    }
-    private void SendSysadmin(string nickname)
-    {
-        SysadminNickname.text = nickname;
+        {
+            StartCoroutine(SetSide(null));
+            SysadminNickname.text = string.Empty;
+        }
     }
     public void OnPlayClick()
     {
